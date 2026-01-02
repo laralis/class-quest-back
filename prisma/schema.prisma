@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  password     String
+  role         UserRole
+  registration String?
+
+  createdClasses Class[]         @relation("TeacherClasses")
+  classes        ClassStudent[]
+  userAnswers    UserAnswer[]
+  results        Results[]
+  questionnaires Questionnaire[]
+}
+
+enum UserRole {
+  student
+  teacher
+}
+
+model Class {
+  id          Int      @id @default(autoincrement())
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  name        String
+  description String?
+  units       Int
+  accessCode  String   @unique
+
+  teacherId Int
+  teacher   User @relation("TeacherClasses", fields: [teacherId], references: [id])
+
+  students       ClassStudent[]
+  questionnaires Questionnaire[]
+}
+
+model ClassStudent {
+  id        Int @id @default(autoincrement())
+  classId   Int
+  studentId Int
+
+  class   Class @relation(fields: [classId], references: [id])
+  student User  @relation(fields: [studentId], references: [id])
+}
+
+model Questionnaire {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id])
+
+  createdById Int
+  createdBy   User @relation(fields: [createdById], references: [id])
+
+  questions Question[]
+}
+
+model Question {
+  id        Int     @id @default(autoincrement())
+  statement String
+  value     Float
+  available Boolean @default(true)
+  time      Int?
+  order     Int
+
+  questionnaireId Int
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id])
+
+  alternative Alternative[]
+  userAnswers  UserAnswer[]
+}
+
+model Alternative {
+  id      Int     @id @default(autoincrement())
+  text    String
+  correct Boolean @default(false)
+
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
+
+  userAnswers UserAnswer[]
+}
+
+model UserAnswer {
+  id           Int      @id @default(autoincrement())
+  responseDate DateTime @default(now())
+
+  studentId Int
+  student   User @relation(fields: [studentId], references: [id])
+
+  alternativeId Int
+  alternative   Alternative @relation(fields: [alternativeId], references: [id])
+
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model Results {
+  id          Int      @id @default(autoincrement())
+  points      Float
+  finalizedAt DateTime @default(now())
+
+  studentId Int
+  student   User @relation(fields: [studentId], references: [id])
+}
