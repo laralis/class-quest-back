@@ -17,6 +17,16 @@ export class QuestionService {
   }
 
   async create(data: Omit<Question, "id">) {
+    const existingQuestionsCount = await database.question.count({
+      where: { questionnaireId: data.questionnaireId },
+    });
+
+    if (existingQuestionsCount >= 5) {
+      throw new Error(
+        "Não é possível adicionar mais de 5 questões por questionário"
+      );
+    }
+
     const newQuestion = await database.question.create({
       data,
       include: {
