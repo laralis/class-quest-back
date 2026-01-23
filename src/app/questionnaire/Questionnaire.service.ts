@@ -20,9 +20,39 @@ export class QuestionnaireService {
     return data;
   }
 
-  async create(data: Omit<Questionnaire, "id" | "createdAt">) {
+  async getAvailableQuestionnaires(studentId: number) {
+    // Busca apenas questionários prontos (ready = true) das turmas do aluno
+    const enrollments = await database.classStudent.findMany({
+      where: { studentId },
+      include: {
+        class: {
+          include: {
+            questionnaires: {
+              where: { ready: true },
+              include: {
+                createdBy: true,
+                questions: {
+                  include: {
+                    alternative: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const questionnaires = enrollments.flatMap(
+      (enrollment) => enrollment.class.questionnaires
+    );
+
+    return questionnaires;
+  }
+
+  async create(data: Omit<Questionnaire, "id" | "createdAt">, userId: number) {
     const user = await database.user.findUnique({
-      where: { id: data.createdById },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -33,6 +63,7 @@ export class QuestionnaireService {
       throw new Error("Apenas professores podem criar questionários");
     }
 
+    // VALIDAÇÃO IMPORTANTE: Verifica se a turma pertence ao professor
     if (data.classId) {
       const classData = await database.class.findUnique({
         where: { id: data.classId },
@@ -41,10 +72,20 @@ export class QuestionnaireService {
       if (!classData) {
         throw new Error("Turma não encontrada");
       }
+
+      // SEGURANÇA: Verifica se o professor é o dono da turma
+      if (classData.teacherId !== userId) {
+        throw new Error(
+          "Você não tem permissão para criar questionários nesta turma"
+        );
+      }
     }
 
     const newQuestionnaire = await database.questionnaire.create({
-      data,
+      data: {
+        ...data,
+        createdById: userId, // Usa o ID do token, não do body
+      },
       include: {
         class: true,
         createdBy: true,

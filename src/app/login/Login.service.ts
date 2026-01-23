@@ -17,6 +17,7 @@ export class LoginService {
         name: user.name,
         id: user.id,
         email: user.email,
+        role: user.role,
       };
 
       const decodedPassword = await argon2.verify(user?.password, password);
@@ -24,7 +25,7 @@ export class LoginService {
       const secret = process.env.SECRET!;
 
       if (decodedPassword) {
-        const token = jwt.sign(payload, secret, { expiresIn: "5m" });
+        const token = jwt.sign(payload, secret);
         return { token };
       } else {
         return null;

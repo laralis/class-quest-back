@@ -21,14 +21,48 @@ export class QuestionnaireController {
     }
   }
 
-  async create(req: Request, res: Response) {
+  async getAvailable(req: Request, res: Response) {
     try {
-      const response = await this.questionnaireService.create(req.body);
-      res.status(201).send(response);
+      const user = (req as any).user;
+
+      if (!user || !user.id) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      if (user.role !== "student") {
+        return res
+          .status(403)
+          .json({ error: "Apenas alunos podem acessar esta rota" });
+      }
+
+      const response =
+        await this.questionnaireService.getAvailableQuestionnaires(user.id);
+      res.send(response);
     } catch (error: any) {
       res.status(500).send({
         error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  async create(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+
+      if (!user || !user.id) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      // Pega o userId do token, não do body
+      const response = await this.questionnaireService.create(
+        req.body,
+        user.id
+      );
+      res.status(201).send(response);
+    } catch (error: any) {
+      res.status(400).send({
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

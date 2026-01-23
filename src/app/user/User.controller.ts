@@ -16,11 +16,21 @@ export class UserController {
     res.send(response);
   }
 
+  async findOne(req: Request, res: Response) {
+    const { id } = req.query;
+    const response = await this.userService.findOne(Number(id));
+    res.status(200).send(response);
+  }
+
   async create(req: Request, res: Response) {
     const result = userCreateSchema.safeParse(req.body);
 
     if (!result.success) {
-      return res.status(400).send({ errors: result.error });
+      return res.status(400).send({
+        error: "Erro de validação",
+        message: "Os dados fornecidos não atendem aos critérios mínimos",
+        details: result.error.format(),
+      });
     }
 
     try {

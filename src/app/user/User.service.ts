@@ -10,6 +10,14 @@ export class UserService {
 
     return data;
   }
+  async findOne(id: number) {
+    const data = await database.user.findUnique({
+      where: { id },
+    });
+    return data;
+  }
+
+ 
 
   async create(data: Omit<User, "id">) {
     const password = await argon2.hash(data.password);

@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -57,6 +56,7 @@ model Questionnaire {
   title       String
   description String?
   createdAt   DateTime @default(now())
+  ready       Boolean  @default(false)
 
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
@@ -79,7 +79,7 @@ model Question {
   questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id])
 
   alternative Alternative[]
-  userAnswers  UserAnswer[]
+  userAnswers UserAnswer[]
 }
 
 model Alternative {
