@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -32,7 +33,6 @@ model Class {
   createdAt   DateTime @default(now())
   name        String
   description String?
-  units       Int
   accessCode  String   @unique
 
   teacherId Int
@@ -47,7 +47,7 @@ model ClassStudent {
   classId   Int
   studentId Int
 
-  class   Class @relation(fields: [classId], references: [id])
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
   student User  @relation(fields: [studentId], references: [id])
 }
 
@@ -59,12 +59,13 @@ model Questionnaire {
   ready       Boolean  @default(false)
 
   classId Int?
-  class   Class? @relation(fields: [classId], references: [id])
+  class   Class? @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   createdById Int
-  createdBy   User @relation(fields: [createdById], references: [id])
+  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   questions Question[]
+  results   Results[]
 }
 
 model Question {
@@ -76,7 +77,7 @@ model Question {
   order     Int
 
   questionnaireId Int
-  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id])
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
 
   alternative Alternative[]
   userAnswers UserAnswer[]
@@ -88,7 +89,7 @@ model Alternative {
   correct Boolean @default(false)
 
   questionId Int
-  question   Question @relation(fields: [questionId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   userAnswers UserAnswer[]
 }
@@ -98,13 +99,13 @@ model UserAnswer {
   responseDate DateTime @default(now())
 
   studentId Int
-  student   User @relation(fields: [studentId], references: [id])
+  student   User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   alternativeId Int
-  alternative   Alternative @relation(fields: [alternativeId], references: [id])
+  alternative   Alternative @relation(fields: [alternativeId], references: [id], onDelete: Cascade)
 
   questionId Int
-  question   Question @relation(fields: [questionId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Results {
@@ -113,5 +114,8 @@ model Results {
   finalizedAt DateTime @default(now())
 
   studentId Int
-  student   User @relation(fields: [studentId], references: [id])
+  student   User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  questionnaireId Int
+  questionnaire   Questionnaire @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
 }

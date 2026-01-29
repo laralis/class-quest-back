@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 @injectable()
 export class QuestionController {
   constructor(
-    @inject(QuestionService) private questionService: QuestionService
+    @inject(QuestionService) private questionService: QuestionService,
   ) {}
 
   async index(req: Request, res: Response) {
@@ -54,6 +54,20 @@ export class QuestionController {
         return res.status(404).send({ error: "Question not found" });
       }
 
+      res.send(response);
+    } catch (error: any) {
+      res.status(500).send({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  async showByQuestionnaire(req: Request, res: Response) {
+    try {
+      const questionnaireId = Number(req.params.questionnaireId);
+      const response =
+        await this.questionService.findByQuestionnaire(questionnaireId);
       res.send(response);
     } catch (error: any) {
       res.status(500).send({

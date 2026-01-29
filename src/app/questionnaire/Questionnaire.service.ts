@@ -2,6 +2,30 @@ import type { Questionnaire } from "@prisma/client";
 import { database } from "../../database/index";
 import { injectable } from "tsyringe";
 
+interface StudentGrade {
+  studentId: string;
+  studentName: string;
+  grade: number | null;
+  answeredAt: string | null;
+}
+
+interface TeacherQuestionnaireHistory {
+  questionnaireId: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  totalStudents: number;
+  answeredCount: number;
+  students: StudentGrade[];
+}
+
+interface ClassQuestionnairesResponse {
+  classId: string;
+  className: string;
+  totalStudents: number;
+  questionnaires: TeacherQuestionnaireHistory[];
+}
+
 @injectable()
 export class QuestionnaireService {
   async index() {
@@ -44,7 +68,7 @@ export class QuestionnaireService {
     });
 
     const questionnaires = enrollments.flatMap(
-      (enrollment) => enrollment.class.questionnaires
+      (enrollment) => enrollment.class.questionnaires,
     );
 
     return questionnaires;
@@ -76,7 +100,7 @@ export class QuestionnaireService {
       // SEGURANÇA: Verifica se o professor é o dono da turma
       if (classData.teacherId !== userId) {
         throw new Error(
-          "Você não tem permissão para criar questionários nesta turma"
+          "Você não tem permissão para criar questionários nesta turma",
         );
       }
     }
@@ -98,7 +122,7 @@ export class QuestionnaireService {
 
   async update(
     data: Partial<Omit<Questionnaire, "id" | "createdAt">>,
-    id: number
+    id: number,
   ) {
     const updatedQuestionnaire = await database.questionnaire.update({
       data,
@@ -136,5 +160,76 @@ export class QuestionnaireService {
     });
 
     return deletedQuestionnaire;
+  }
+
+  async getQuestionnaireGrades(
+    classId: number,
+    teacherId: number,
+  ): Promise<ClassQuestionnairesResponse> {
+    // Busca a turma com todos os questionários
+    const classData = await database.class.findUnique({
+      where: { id: classId },
+      include: {
+        students: {
+          include: {
+            student: true,
+          },
+        },
+        questionnaires: {
+          include: {
+            results: {
+              include: {
+                student: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!classData) {
+      throw new Error("Turma não encontrada");
+    }
+
+    // Verifica se o professor é responsável pela turma
+    if (classData.teacherId !== teacherId) {
+      throw new Error("Você não tem permissão para acessar esta turma");
+    }
+
+    // Monta a lista de questionários com as notas dos alunos
+    const questionnaires: TeacherQuestionnaireHistory[] =
+      classData.questionnaires.map((questionnaire) => {
+        const students: StudentGrade[] = classData.students.map(
+          (enrollment) => {
+            const result = questionnaire.results.find(
+              (r) => r.studentId === enrollment.studentId,
+            );
+
+            return {
+              studentId: enrollment.student.id.toString(),
+              studentName: enrollment.student.name,
+              grade: result?.points ?? null,
+              answeredAt: result?.finalizedAt?.toISOString() ?? null,
+            };
+          },
+        );
+
+        return {
+          questionnaireId: questionnaire.id.toString(),
+          title: questionnaire.title,
+          description: questionnaire.description ?? "",
+          createdAt: questionnaire.createdAt.toISOString(),
+          totalStudents: classData.students.length,
+          answeredCount: questionnaire.results.length,
+          students,
+        };
+      });
+
+    return {
+      classId: classData.id.toString(),
+      className: classData.name,
+      totalStudents: classData.students.length,
+      questionnaires,
+    };
   }
 }

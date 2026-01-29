@@ -3,14 +3,12 @@ import z from "zod";
 export const classCreateSchema = z.object({
   name: z.string().min(3, "Class name must have at least 3 characters"),
   description: z.string().optional(),
-  units: z.number().min(1, "Class must have at least 1 unit"),
   teacherId: z.number().int().positive(),
 });
 
 export const classUpdateSchema = z.object({
   name: z.string().min(3, "Class name must have at least 3 characters"),
   description: z.string().optional(),
-  units: z.number().min(1, "Class must have at least 1 unit"),
 });
 
 export const classAddStudentSchema = z.object({

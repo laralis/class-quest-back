@@ -49,7 +49,7 @@ router.get(
   authMiddleware,
   (req: Request, res: Response) => {
     classController.getMyClasses(req, res);
-  }
+  },
 );
 router.post(
   "/class",
@@ -57,7 +57,7 @@ router.post(
   upload.single("image"),
   (req: Request, res: Response) => {
     classController.create(req, res);
-  }
+  },
 );
 router.get("/class", authMiddleware, (req: Request, res: Response) => {
   classController.index(req, res);
@@ -75,7 +75,7 @@ router.put(
   teacherOnly,
   (req: Request, res: Response) => {
     classController.update(req, res);
-  }
+  },
 );
 router.delete(
   "/class/:id",
@@ -83,16 +83,18 @@ router.delete(
   teacherOnly,
   (req: Request, res: Response) => {
     classController.delete(req, res);
-  }
+  },
 );
+
 router.post(
-  "/class/student",
+  "/class/student-mail",
   authMiddleware,
   teacherOnly,
   (req: Request, res: Response) => {
-    classController.addStudent(req, res);
-  }
+    classController.addAlunoByEmail(req, res);
+  },
 );
+
 router.post("/class/code", authMiddleware, (req: Request, res: Response) => {
   classController.enter(req, res);
 });
@@ -107,7 +109,7 @@ router.get(
   authMiddleware,
   (req: Request, res: Response) => {
     questionnaireController.getAvailable(req, res);
-  }
+  },
 );
 router.post(
   "/questionnaire",
@@ -115,14 +117,14 @@ router.post(
   teacherOnly,
   (req: Request, res: Response) => {
     questionnaireController.create(req, res);
-  }
+  },
 );
 router.get(
   "/questionnaire/:id",
   authMiddleware,
   (req: Request, res: Response) => {
     questionnaireController.show(req, res);
-  }
+  },
 );
 router.put(
   "/questionnaire/:id",
@@ -130,7 +132,7 @@ router.put(
   teacherOnly,
   (req: Request, res: Response) => {
     questionnaireController.update(req, res);
-  }
+  },
 );
 router.delete(
   "/questionnaire/:id",
@@ -138,7 +140,13 @@ router.delete(
   teacherOnly,
   (req: Request, res: Response) => {
     questionnaireController.delete(req, res);
-  }
+  },
+);
+router.get(
+  "/questionnaire/grades/:classId",
+  authMiddleware,
+  teacherOnly,
+  (req, res) => questionnaireController.getQuestionnaireGrades(req, res),
 );
 
 const questionController = container.resolve(QuestionController);
@@ -152,7 +160,7 @@ router.post(
   teacherOnly,
   (req: Request, res: Response) => {
     questionController.create(req, res);
-  }
+  },
 );
 
 router.get("/question/:id", authMiddleware, (req: Request, res: Response) => {
@@ -165,7 +173,7 @@ router.put(
   teacherOnly,
   (req: Request, res: Response) => {
     questionController.update(req, res);
-  }
+  },
 );
 router.delete(
   "/question/:id",
@@ -173,7 +181,15 @@ router.delete(
   teacherOnly,
   (req: Request, res: Response) => {
     questionController.delete(req, res);
-  }
+  },
+);
+
+router.get(
+  "/questions/questionnaire/:questionnaireId",
+  authMiddleware,
+  (req: Request, res: Response) => {
+    questionController.showByQuestionnaire(req, res);
+  },
 );
 
 const alternativeController = container.resolve(AlternativeController);
@@ -187,7 +203,7 @@ router.post(
   teacherOnly,
   (req: Request, res: Response) => {
     alternativeController.create(req, res);
-  }
+  },
 );
 
 router.put(
@@ -196,7 +212,7 @@ router.put(
   teacherOnly,
   (req: Request, res: Response) => {
     alternativeController.update(req, res);
-  }
+  },
 );
 
 router.delete(
@@ -205,7 +221,7 @@ router.delete(
   teacherOnly,
   (req: Request, res: Response) => {
     alternativeController.delete(req, res);
-  }
+  },
 );
 
 // Rotas de respostas (alunos podem responder, todos autenticados podem visualizar)
@@ -223,28 +239,28 @@ router.get(
   authMiddleware,
   (req: Request, res: Response) => {
     userAnswerController.show(req, res);
-  }
+  },
 );
 router.get(
   "/user-answer/student/:studentId",
   authMiddleware,
   (req: Request, res: Response) => {
     userAnswerController.showByStudent(req, res);
-  }
+  },
 );
 router.put(
   "/user-answer/:id",
   authMiddleware,
   (req: Request, res: Response) => {
     userAnswerController.update(req, res);
-  }
+  },
 );
 router.delete(
   "/user-answer/:id",
   authMiddleware,
   (req: Request, res: Response) => {
     userAnswerController.delete(req, res);
-  }
+  },
 );
 
 // Rotas de resultados
@@ -255,6 +271,14 @@ router.get("/results", authMiddleware, (req: Request, res: Response) => {
 router.post("/results", authMiddleware, (req: Request, res: Response) => {
   resultsController.create(req, res);
 });
+
+router.get(
+  "/results/:classId/final-grade/:studentId",
+  authMiddleware,
+  (req: Request, res: Response) => {
+    userAnswerController.calculateClassGrade(req, res);
+  },
+);
 router.get("/results/:id", authMiddleware, (req: Request, res: Response) => {
   resultsController.show(req, res);
 });
@@ -263,7 +287,7 @@ router.get(
   authMiddleware,
   (req: Request, res: Response) => {
     resultsController.showByStudent(req, res);
-  }
+  },
 );
 router.put("/results/:id", authMiddleware, (req: Request, res: Response) => {
   resultsController.update(req, res);

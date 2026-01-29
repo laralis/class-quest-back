@@ -6,7 +6,7 @@ import { Request, Response } from "express";
 export class QuestionnaireController {
   constructor(
     @inject(QuestionnaireService)
-    private questionnaireService: QuestionnaireService
+    private questionnaireService: QuestionnaireService,
   ) {}
 
   async index(req: Request, res: Response) {
@@ -57,7 +57,7 @@ export class QuestionnaireController {
       // Pega o userId do token, não do body
       const response = await this.questionnaireService.create(
         req.body,
-        user.id
+        user.id,
       );
       res.status(201).send(response);
     } catch (error: any) {
@@ -108,6 +108,31 @@ export class QuestionnaireController {
         error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  }
+  async getQuestionnaireGrades(req: Request, res: Response) {
+    try {
+      const { classId } = req.params;
+      const user = (req as any).user;
+      const teacherId = user.id;
+
+      if (!teacherId) {
+        return res.status(401).json({ error: "Usuário não autenticado" });
+      }
+
+      const grades = await this.questionnaireService.getQuestionnaireGrades(
+        Number(classId),
+        teacherId,
+      );
+
+      return res.status(200).json(grades);
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
+      return res
+        .status(500)
+        .json({ error: "Erro ao buscar notas dos questionários" });
     }
   }
 }

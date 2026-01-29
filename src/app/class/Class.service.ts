@@ -158,20 +158,7 @@ export class ClassService {
     return deletedClass;
   }
 
-  async addAluno(classId: number, studentId: number) {
-    const classStudent = await database.classStudent.create({
-      data: {
-        classId,
-        studentId,
-      },
-      include: {
-        class: true,
-        student: true,
-      },
-    });
 
-    return classStudent;
-  }
 
   async addAlunoByEmail(classId: number, email: string) {
     // Busca o aluno pelo email

@@ -40,7 +40,6 @@ export class ClassController {
       const data = {
         name: req.body.name,
         description: req.body.description || null,
-        units: Number(req.body.units), // Converte para número
         teacherId: user.id, // Pega do token
       };
 
@@ -52,7 +51,7 @@ export class ClassController {
         data,
         imageFile,
         protocol,
-        host
+        host,
       );
       return res.status(201).json(turma);
     } catch (error: any) {
@@ -63,14 +62,12 @@ export class ClassController {
     }
   }
 
-  async addStudent(req: Request, res: Response) {
-    const parse = classAddStudentSchema.safeParse(req.body);
-    if (!parse.success) {
-      return res.status(400).json({ errors: parse.error.flatten() });
-    }
-
-    const { classId, studentId } = parse.data;
-    const relacao = await this.classService.addAluno(classId, studentId);
+  async addAlunoByEmail(req: Request, res: Response) {
+    const { classId, studentEmail } = req.body;
+    const relacao = await this.classService.addAlunoByEmail(
+      classId,
+      studentEmail,
+    );
     return res.status(201).json(relacao);
   }
 
@@ -109,7 +106,7 @@ export class ClassController {
 
       const enrollment = await this.classService.addAlunoByEmail(
         classId,
-        email
+        email,
       );
       return res.status(201).json(enrollment);
     } catch (error: any) {
@@ -233,7 +230,7 @@ export class ClassController {
 
       const students = await this.classService.getClassStudents(
         classId,
-        user.id
+        user.id,
       );
       return res.json(students);
     } catch (error: any) {
@@ -262,7 +259,7 @@ export class ClassController {
       const result = await this.classService.getClassStudentsByCode(
         accessCode,
         user.id,
-        user.role
+        user.role,
       );
       return res.json(result);
     } catch (error: any) {

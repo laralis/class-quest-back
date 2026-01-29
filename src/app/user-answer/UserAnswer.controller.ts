@@ -5,7 +5,7 @@ import { Request, Response } from "express";
 @injectable()
 export class UserAnswerController {
   constructor(
-    @inject(UserAnswerService) private userAnswerService: UserAnswerService
+    @inject(UserAnswerService) private userAnswerService: UserAnswerService,
   ) {}
 
   async index(req: Request, res: Response) {
@@ -67,6 +67,23 @@ export class UserAnswerController {
     try {
       const studentId = Number(req.params.studentId);
       const response = await this.userAnswerService.findByStudent(studentId);
+      res.send(response);
+    } catch (error: any) {
+      res.status(500).send({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  async calculateClassGrade(req: Request, res: Response) {
+    try {
+      const studentId = Number(req.params.studentId);
+      const classId = Number(req.params.classId);
+      const response = await this.userAnswerService.calculateClassGrade(
+        studentId,
+        classId,
+      );
       res.send(response);
     } catch (error: any) {
       res.status(500).send({

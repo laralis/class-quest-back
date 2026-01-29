@@ -31,7 +31,7 @@ export class UserAnswerService {
 
   async update(
     data: Partial<Omit<UserAnswer, "id" | "responseDate">>,
-    id: number
+    id: number,
   ) {
     const updatedUserAnswer = await database.userAnswer.update({
       data,
@@ -60,16 +60,96 @@ export class UserAnswerService {
   }
 
   async findByStudent(studentId: number) {
-    const userAnswers = await database.userAnswer.findMany({
-      where: { studentId },
+    return await database.userAnswer.findMany({
+      where: {
+        studentId: studentId,
+      },
       include: {
-        student: true,
+        question: {
+          include: {
+            questionnaire: {
+              select: {
+                id: true,
+                title: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
         alternative: true,
-        question: true,
+      },
+      orderBy: {
+        responseDate: "desc",
+      },
+    });
+  }
+
+  async calculateClassGrade(studentId: number, classId: number) {
+    // Buscar informações da turma
+    const classData = await database.class.findUnique({
+      where: { id: classId },
+    });
+
+    if (!classData) {
+      throw new Error("Class not found");
+    }
+
+    // Buscar todos os questionários da turma
+    const questionnaires = await database.questionnaire.findMany({
+      where: { classId },
+      include: {
+        questions: {
+          include: {
+            userAnswers: {
+              where: { studentId },
+              include: { alternative: true },
+            },
+          },
+        },
       },
     });
 
-    return userAnswers;
+    let totalEarnedPoints = 0;
+    let totalPossiblePoints = 0;
+
+    const questionnaireResults = questionnaires.map((questionnaire) => {
+      let earnedPoints = 0;
+      let totalPoints = 0;
+
+      questionnaire.questions.forEach((question) => {
+        totalPoints += question.value;
+
+        const userAnswer = question.userAnswers[0];
+        if (userAnswer && userAnswer.alternative.correct) {
+          earnedPoints += question.value;
+        }
+      });
+
+      totalEarnedPoints += earnedPoints;
+      totalPossiblePoints += totalPoints;
+
+      return {
+        questionnaireId: questionnaire.id,
+        questionnaireTitle: questionnaire.title,
+        earnedPoints,
+        totalPoints,
+        percentage: totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0,
+      };
+    });
+
+    const finalGrade =
+      totalPossiblePoints > 0
+        ? (totalEarnedPoints / totalPossiblePoints) * 10
+        : 0;
+
+    return {
+      studentId,
+      classId,
+      questionnaires: questionnaireResults,
+      totalEarnedPoints,
+      totalPossiblePoints,
+      finalGrade: Number(finalGrade.toFixed(2)),
+    };
   }
 
   async delete(id: number) {

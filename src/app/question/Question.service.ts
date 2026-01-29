@@ -23,7 +23,7 @@ export class QuestionService {
 
     if (existingQuestionsCount >= 5) {
       throw new Error(
-        "Não é possível adicionar mais de 5 questões por questionário"
+        "Não é possível adicionar mais de 5 questões por questionário",
       );
     }
 
@@ -62,6 +62,22 @@ export class QuestionService {
     });
 
     return question;
+  }
+
+  async findByQuestionnaire(questionnaireId: number) {
+    const questions = await database.question.findMany({
+      where: { questionnaireId },
+      include: {
+        questionnaire: true,
+        alternative: true,
+        userAnswers: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    });
+
+    return questions;
   }
 
   async delete(id: number) {
