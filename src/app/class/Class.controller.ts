@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import { inject, injectable } from "tsyringe";
-import {
-  classAddStudentSchema,
-  classAddStudentByEmailSchema,
-} from "../user/validators/Class.validator";
+import { classAddStudentByEmailSchema } from "./Class.validator";
 import { ClassService } from "./Class.service";
 
 @injectable()
@@ -26,21 +23,10 @@ export class ClassController {
     try {
       const user = (req as any).user;
 
-      if (!user || !user.id) {
-        return res.status(401).json({ error: "Usuário não autenticado" });
-      }
-
-      if (user.role !== "teacher") {
-        return res
-          .status(403)
-          .json({ error: "Apenas professores podem criar turmas" });
-      }
-
-      // Converte os dados do FormData
       const data = {
         name: req.body.name,
         description: req.body.description || null,
-        teacherId: user.id, // Pega do token
+        teacherId: user.id,
       };
 
       const imageFile = req.file;
@@ -92,7 +78,6 @@ export class ClassController {
 
       const { classId, email } = parse.data;
 
-      // Verifica se o professor é responsável pela turma
       const classData = await this.classService.findById(classId);
       if (!classData) {
         return res.status(404).json({ error: "Turma não encontrada" });
@@ -125,10 +110,6 @@ export class ClassController {
     try {
       const user = (req as any).user;
 
-      if (!user || !user.id) {
-        return res.status(401).json({ error: "Usuário não autenticado" });
-      }
-
       const { accessCode } = req.body;
 
       if (!accessCode) {
@@ -139,8 +120,8 @@ export class ClassController {
 
       const entry = await this.classService.enterByCode(accessCode, user.id);
       return res.status(201).json(entry);
-    } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+    } catch (error: any) {
+      return res.status(400).json({ message: error.message });
     }
   }
 
@@ -197,7 +178,6 @@ export class ClassController {
 
   async getMyClasses(req: Request, res: Response) {
     try {
-      // O authMiddleware deve adicionar o user no request
       const user = (req as any).user;
 
       if (!user || !user.id) {

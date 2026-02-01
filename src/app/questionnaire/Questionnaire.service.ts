@@ -45,7 +45,6 @@ export class QuestionnaireService {
   }
 
   async getAvailableQuestionnaires(studentId: number) {
-    // Busca apenas questionários prontos (ready = true) das turmas do aluno
     const enrollments = await database.classStudent.findMany({
       where: { studentId },
       include: {
@@ -87,7 +86,6 @@ export class QuestionnaireService {
       throw new Error("Apenas professores podem criar questionários");
     }
 
-    // VALIDAÇÃO IMPORTANTE: Verifica se a turma pertence ao professor
     if (data.classId) {
       const classData = await database.class.findUnique({
         where: { id: data.classId },
@@ -97,7 +95,6 @@ export class QuestionnaireService {
         throw new Error("Turma não encontrada");
       }
 
-      // SEGURANÇA: Verifica se o professor é o dono da turma
       if (classData.teacherId !== userId) {
         throw new Error(
           "Você não tem permissão para criar questionários nesta turma",
@@ -108,7 +105,7 @@ export class QuestionnaireService {
     const newQuestionnaire = await database.questionnaire.create({
       data: {
         ...data,
-        createdById: userId, // Usa o ID do token, não do body
+        createdById: userId,
       },
       include: {
         class: true,
@@ -166,7 +163,6 @@ export class QuestionnaireService {
     classId: number,
     teacherId: number,
   ): Promise<ClassQuestionnairesResponse> {
-    // Busca a turma com todos os questionários
     const classData = await database.class.findUnique({
       where: { id: classId },
       include: {
@@ -191,12 +187,10 @@ export class QuestionnaireService {
       throw new Error("Turma não encontrada");
     }
 
-    // Verifica se o professor é responsável pela turma
     if (classData.teacherId !== teacherId) {
       throw new Error("Você não tem permissão para acessar esta turma");
     }
 
-    // Monta a lista de questionários com as notas dos alunos
     const questionnaires: TeacherQuestionnaireHistory[] =
       classData.questionnaires.map((questionnaire) => {
         const students: StudentGrade[] = classData.students.map(

@@ -15,7 +15,7 @@ interface TokenPayload {
 export const authMiddleware = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const authorization = req.headers.authorization;
 
@@ -26,17 +26,14 @@ export const authMiddleware = async (
   const token = authorization.replace("Bearer ", "");
 
   try {
-    // Verifica se o token está na blacklist
     const logoutService = container.resolve(LogoutService);
     if (logoutService.isTokenBlacklisted(token)) {
       return res.status(401).json({ error: "Token inválido" });
     }
 
-    // Verifica a validade do token
     const secret = process.env.SECRET!;
     const decoded = jwt.verify(token, secret) as TokenPayload;
 
-    // Adiciona as informações do usuário ao request
     req.user = decoded;
 
     next();
@@ -48,7 +45,7 @@ export const authMiddleware = async (
 export const teacherOnly = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if (!req.user) {
     return res.status(401).json({ error: "Não autenticado" });
@@ -64,7 +61,7 @@ export const teacherOnly = (
 export const studentOnly = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if (!req.user) {
     return res.status(401).json({ error: "Não autenticado" });

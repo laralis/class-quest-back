@@ -54,7 +54,6 @@ export class QuestionnaireController {
         return res.status(401).json({ error: "Usuário não autenticado" });
       }
 
-      // Pega o userId do token, não do body
       const response = await this.questionnaireService.create(
         req.body,
         user.id,

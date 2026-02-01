@@ -10,14 +10,12 @@ export class ClassService {
     return nanoid();
   }
 
-  // Método auxiliar para garantir que o código seja único
   private async generateUniqueAccessCode(): Promise<string> {
     let code = this.generateAccessCode();
     let exists = await database.class.findUnique({
       where: { accessCode: code },
     });
 
-    // Se o código já existe, gera um novo até encontrar um único
     while (exists) {
       code = this.generateAccessCode();
       exists = await database.class.findUnique({
@@ -48,7 +46,7 @@ export class ClassService {
     data: Omit<Class, "id" | "createdAt" | "accessCode" | "logoUrl">,
     imageFile?: Express.Multer.File,
     protocol?: string,
-    host?: string
+    host?: string,
   ) {
     const teacher = await database.user.findUnique({
       where: { id: data.teacherId },
@@ -60,7 +58,7 @@ export class ClassService {
 
     if (teacher.role !== "teacher") {
       throw new Error(
-        "Apenas usuários com papel de professor podem criar turmas"
+        "Apenas usuários com papel de professor podem criar turmas",
       );
     }
 
@@ -69,7 +67,6 @@ export class ClassService {
       logoUrl = `${protocol}://${host}/uploads/${imageFile.filename}`;
     }
 
-    // Gera um código de acesso único automaticamente
     const accessCode = await this.generateUniqueAccessCode();
 
     const newClass = await database.class.create({
@@ -99,7 +96,7 @@ export class ClassService {
 
       if (teacher.role !== "teacher") {
         throw new Error(
-          "Apenas usuários com papel de professor podem ser responsáveis por turmas"
+          "Apenas usuários com papel de professor podem ser responsáveis por turmas",
         );
       }
     }
@@ -158,10 +155,7 @@ export class ClassService {
     return deletedClass;
   }
 
-
-
   async addAlunoByEmail(classId: number, email: string) {
-    // Busca o aluno pelo email
     const student = await database.user.findUnique({
       where: { email },
     });
@@ -174,7 +168,6 @@ export class ClassService {
       throw new Error("O usuário encontrado não é um aluno");
     }
 
-    // Verifica se a turma existe
     const classData = await database.class.findUnique({
       where: { id: classId },
     });
@@ -183,7 +176,6 @@ export class ClassService {
       throw new Error("Turma não encontrada");
     }
 
-    // Verifica se o aluno já está matriculado
     const existingEnrollment = await database.classStudent.findFirst({
       where: {
         classId,
@@ -195,7 +187,6 @@ export class ClassService {
       throw new Error("Aluno já está matriculado nesta turma");
     }
 
-    // Cria a matrícula
     const classStudent = await database.classStudent.create({
       data: {
         classId,
@@ -274,7 +265,6 @@ export class ClassService {
 
   async getMyClasses(userId: number, userRole: string) {
     if (userRole === "teacher") {
-      // Se for professor, retorna as turmas que ele leciona
       const classes = await database.class.findMany({
         where: {
           teacherId: userId,
@@ -297,7 +287,6 @@ export class ClassService {
       return classes;
     }
 
-    // Se for aluno, retorna as turmas em que ele está matriculado
     const enrollments = await database.classStudent.findMany({
       where: {
         studentId: userId,
@@ -326,7 +315,6 @@ export class ClassService {
   }
 
   async getClassStudents(classId: number, teacherId: number) {
-    // Verifica se a turma existe
     const classData = await database.class.findUnique({
       where: { id: classId },
       include: {
@@ -338,14 +326,12 @@ export class ClassService {
       throw new Error("Turma não encontrada");
     }
 
-    // Verifica se o professor é o responsável pela turma
     if (classData.teacherId !== teacherId) {
       throw new Error(
-        "Você não tem permissão para acessar os alunos desta turma"
+        "Você não tem permissão para acessar os alunos desta turma",
       );
     }
 
-    // Busca todos os alunos matriculados na turma
     const enrollments = await database.classStudent.findMany({
       where: {
         classId,
@@ -369,9 +355,8 @@ export class ClassService {
   async getClassStudentsByCode(
     accessCode: string,
     userId: number,
-    userRole: string
+    userRole: string,
   ) {
-    // Verifica se a turma existe pelo código de acesso
     const classData = await database.class.findUnique({
       where: { accessCode },
       include: {
@@ -383,14 +368,12 @@ export class ClassService {
       throw new Error("Turma não encontrada com este código de acesso");
     }
 
-    // Se for professor, verifica se é o responsável
     if (userRole === "teacher" && classData.teacherId !== userId) {
       throw new Error(
-        "Você não tem permissão para acessar os alunos desta turma"
+        "Você não tem permissão para acessar os alunos desta turma",
       );
     }
 
-    // Se for aluno, verifica se está matriculado na turma
     if (userRole === "student") {
       const isEnrolled = await database.classStudent.findFirst({
         where: {
@@ -404,7 +387,6 @@ export class ClassService {
       }
     }
 
-    // Busca todos os alunos matriculados na turma
     const enrollments = await database.classStudent.findMany({
       where: {
         classId: classData.id,

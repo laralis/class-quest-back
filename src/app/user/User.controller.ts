@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import {
   userCreateSchema,
   userUpdateSchema,
-} from "./validators/User.validator";
+} from "./User.validator";
 
 @injectable()
 export class UserController {

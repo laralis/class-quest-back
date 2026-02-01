@@ -85,7 +85,6 @@ export class UserAnswerService {
   }
 
   async calculateClassGrade(studentId: number, classId: number) {
-    // Buscar informações da turma
     const classData = await database.class.findUnique({
       where: { id: classId },
     });
@@ -94,7 +93,6 @@ export class UserAnswerService {
       throw new Error("Class not found");
     }
 
-    // Buscar todos os questionários da turma
     const questionnaires = await database.questionnaire.findMany({
       where: { classId },
       include: {
