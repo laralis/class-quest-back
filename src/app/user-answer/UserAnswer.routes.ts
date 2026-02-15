@@ -6,13 +6,6 @@ import { UserAnswerController } from "./UserAnswer.controller";
 export const userAnswerRouter = express.Router();
 const userAnswerController = container.resolve(UserAnswerController);
 
-userAnswerRouter.get(
-  "/results/:classId/final-grade/:studentId",
-  authMiddleware,
-  (req: Request, res: Response) => {
-    userAnswerController.calculateClassGrade(req, res);
-  },
-);
 userAnswerRouter.get("/", authMiddleware, (req: Request, res: Response) => {
   userAnswerController.index(req, res);
 });

@@ -86,4 +86,35 @@ export class ResultsController {
       });
     }
   }
+
+  async calculateStudentGrade(req: Request, res: Response) {
+    try {
+      const studentId = Number(req.params.studentId);
+      const classId = Number(req.params.classId);
+      const response = await this.resultsService.calculateStudentGrade(
+        classId,
+        studentId,
+      );
+      res.send(response);
+    } catch (error: any) {
+      res.status(500).send({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  async calculateAllStudentsGrades(req: Request, res: Response) {
+    try {
+      const classId = Number(req.params.classId);
+      const response =
+        await this.resultsService.calculateAllStudentsGrades(classId);
+      res.send(response);
+    } catch (error: any) {
+      res.status(500).send({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
 }

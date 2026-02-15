@@ -76,22 +76,6 @@ export class UserAnswerController {
     }
   }
 
-  async calculateClassGrade(req: Request, res: Response) {
-    try {
-      const studentId = Number(req.params.studentId);
-      const classId = Number(req.params.classId);
-      const response = await this.userAnswerService.calculateClassGrade(
-        studentId,
-        classId,
-      );
-      res.send(response);
-    } catch (error: any) {
-      res.status(500).send({
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  }
 
   async delete(req: Request, res: Response) {
     try {

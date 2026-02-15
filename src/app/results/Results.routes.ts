@@ -4,6 +4,7 @@ import { ResultsController } from "./Results.controller";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 
 export const resultsRouter = express.Router();
+
 const resultsController = container.resolve(ResultsController);
 resultsRouter.get("/", authMiddleware, (req: Request, res: Response) => {
   resultsController.index(req, res);
@@ -28,3 +29,19 @@ resultsRouter.put("/:id", authMiddleware, (req: Request, res: Response) => {
 resultsRouter.delete("/:id", authMiddleware, (req: Request, res: Response) => {
   resultsController.delete(req, res);
 });
+
+resultsRouter.get(
+  "/:classId/final-grade/:studentId",
+  authMiddleware,
+  (req: Request, res: Response) => {
+    resultsController.calculateStudentGrade(req, res);
+  },
+);
+
+resultsRouter.get(
+  "/:classId/all-students-grades",
+  authMiddleware,
+  (req: Request, res: Response) => {
+    resultsController.calculateAllStudentsGrades(req, res);
+  },
+);
